@@ -17,7 +17,6 @@ import {
   AIProviderError,
   InvalidAPIKeyError,
 } from './types';
-import { env } from '../../utils/env';
 
 export class OpenRouterService implements IAIProvider {
   readonly provider: AIProviderType = 'openrouter';

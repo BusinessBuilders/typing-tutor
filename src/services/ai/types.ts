@@ -187,9 +187,12 @@ export class AIProviderError extends Error {
 }
 
 export class RateLimitError extends AIProviderError {
+  retryAfter?: number;
+
   constructor(provider: AIProviderType, retryAfter?: number) {
     super('Rate limit exceeded', provider, 'RATE_LIMIT', 429);
     this.name = 'RateLimitError';
+    this.retryAfter = retryAfter;
   }
 }
 
