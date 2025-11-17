@@ -1,0 +1,52 @@
+.App {
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.App-header {
+  text-align: center;
+  padding: 2rem;
+  border-radius: 1rem;
+  background-color: #f8f9fa;
+}
+
+.App-header h1 {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+  color: #2c3e50;
+}
+
+.App-header p {
+  font-size: 1.2rem;
+  color: #5a6c7d;
+  margin: 1rem 0;
+}
+
+button {
+  padding: 1rem 2rem;
+  font-size: 1.1rem;
+  border: none;
+  border-radius: 0.5rem;
+  background-color: #6c63ff;
+  color: white;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  margin: 1rem 0;
+}
+
+button:hover {
+  background-color: #5a52d5;
+}
+
+button:active {
+  transform: scale(0.98);
+}
+
+.count {
+  font-weight: bold;
+  color: #6c63ff;
+}
