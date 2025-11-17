@@ -23,6 +23,10 @@ export const DEFAULT_SETTINGS = {
   dyslexicFont: false,
   voiceGender: 'neutral',
   voiceSpeed: 1.0,
+  soundEffects: true,
+  volume: 70,
+  hapticFeedback: true,
+  keyboardTheme: 'default',
 } as const;
 
 // Difficulty Levels

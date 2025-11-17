@@ -19,6 +19,11 @@ export interface UserSettings {
   dyslexicFont: boolean;
   voiceGender: 'male' | 'female' | 'neutral';
   voiceSpeed: number; // 0.5 to 2.0
+  // Keyboard sound and feedback settings (Steps 118-119)
+  soundEffects: boolean;
+  volume: number; // 0-100
+  hapticFeedback: boolean;
+  keyboardTheme: string;
 }
 
 // Learning and Progress Types

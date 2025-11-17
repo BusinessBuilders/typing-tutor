@@ -102,6 +102,10 @@ export const UserDB = {
         dyslexicFont: Boolean(row.dyslexic_font),
         voiceGender: row.voice_gender,
         voiceSpeed: row.voice_speed,
+        soundEffects: row.sound_effects !== undefined ? Boolean(row.sound_effects) : true,
+        volume: row.volume !== undefined ? row.volume : 70,
+        hapticFeedback: row.haptic_feedback !== undefined ? Boolean(row.haptic_feedback) : true,
+        keyboardTheme: row.keyboard_theme || 'default',
       },
     }));
   },
@@ -132,6 +136,10 @@ export const UserDB = {
         dyslexicFont: Boolean(row.dyslexic_font),
         voiceGender: row.voice_gender,
         voiceSpeed: row.voice_speed,
+        soundEffects: row.sound_effects !== undefined ? Boolean(row.sound_effects) : true,
+        volume: row.volume !== undefined ? row.volume : 70,
+        hapticFeedback: row.haptic_feedback !== undefined ? Boolean(row.haptic_feedback) : true,
+        keyboardTheme: row.keyboard_theme || 'default',
       },
     };
   },
