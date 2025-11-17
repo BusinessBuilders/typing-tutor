@@ -1,10 +1,13 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { AppRouter } from './router.tsx'
+import AppErrorBoundary from './components/AppErrorBoundary.tsx'
 import './index.css'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <AppRouter />
+    <AppErrorBoundary>
+      <AppRouter />
+    </AppErrorBoundary>
   </React.StrictMode>,
 )
