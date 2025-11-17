@@ -2,6 +2,7 @@ const Database = require('better-sqlite3');
 const path = require('path');
 const fs = require('fs');
 const { app } = require('electron');
+const { runMigrations, getMigrationStatus } = require('./migrations.cjs');
 
 let db = null;
 
@@ -34,6 +35,9 @@ function initializeDatabase() {
 
     // Create tables
     createTables();
+
+    // Run migrations
+    runMigrations(db);
 
     return db;
   } catch (error) {
@@ -182,6 +186,100 @@ function createTables() {
     )
   `);
 
+  // Custom words table - user-specific word lists
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS custom_words (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      word TEXT NOT NULL,
+      category TEXT,
+      difficulty TEXT DEFAULT 'easy',
+      image_url TEXT,
+      pronunciation_url TEXT,
+      times_practiced INTEGER DEFAULT 0,
+      last_practiced_at DATETIME,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    )
+  `);
+
+  // Typing attempts table - detailed attempt tracking
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS typing_attempts (
+      id TEXT PRIMARY KEY,
+      session_id TEXT NOT NULL,
+      exercise_id TEXT NOT NULL,
+      user_id TEXT NOT NULL,
+      expected_text TEXT NOT NULL,
+      typed_text TEXT NOT NULL,
+      is_correct INTEGER DEFAULT 0,
+      time_taken INTEGER NOT NULL,
+      wpm REAL DEFAULT 0.0,
+      accuracy REAL DEFAULT 0.0,
+      mistakes_count INTEGER DEFAULT 0,
+      backspace_count INTEGER DEFAULT 0,
+      hint_used INTEGER DEFAULT 0,
+      timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (session_id) REFERENCES sessions(id) ON DELETE CASCADE,
+      FOREIGN KEY (exercise_id) REFERENCES exercises(id) ON DELETE CASCADE,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    )
+  `);
+
+  // Mistake patterns table - analytics for common errors
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS mistake_patterns (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id TEXT NOT NULL,
+      pattern_type TEXT NOT NULL,
+      from_char TEXT,
+      to_char TEXT,
+      word_context TEXT,
+      frequency INTEGER DEFAULT 1,
+      first_occurrence DATETIME DEFAULT CURRENT_TIMESTAMP,
+      last_occurrence DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    )
+  `);
+
+  // Reports table - saved progress reports
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS reports (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      report_type TEXT NOT NULL,
+      title TEXT NOT NULL,
+      start_date DATE NOT NULL,
+      end_date DATE NOT NULL,
+      total_sessions INTEGER DEFAULT 0,
+      total_words INTEGER DEFAULT 0,
+      average_accuracy REAL DEFAULT 0.0,
+      average_wpm REAL DEFAULT 0.0,
+      improvement_rate REAL DEFAULT 0.0,
+      strengths TEXT,
+      areas_to_improve TEXT,
+      achievements_earned TEXT,
+      generated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      data_json TEXT,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    )
+  `);
+
+  // Indexes for better query performance
+  db.exec(`
+    CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions(user_id);
+    CREATE INDEX IF NOT EXISTS idx_sessions_start_time ON sessions(start_time);
+    CREATE INDEX IF NOT EXISTS idx_exercises_session_id ON exercises(session_id);
+    CREATE INDEX IF NOT EXISTS idx_typing_attempts_user_id ON typing_attempts(user_id);
+    CREATE INDEX IF NOT EXISTS idx_typing_attempts_session_id ON typing_attempts(session_id);
+    CREATE INDEX IF NOT EXISTS idx_typing_attempts_timestamp ON typing_attempts(timestamp);
+    CREATE INDEX IF NOT EXISTS idx_mistake_patterns_user_id ON mistake_patterns(user_id);
+    CREATE INDEX IF NOT EXISTS idx_custom_words_user_id ON custom_words(user_id);
+    CREATE INDEX IF NOT EXISTS idx_reports_user_id ON reports(user_id);
+    CREATE INDEX IF NOT EXISTS idx_achievements_user_id ON achievements(user_id);
+    CREATE INDEX IF NOT EXISTS idx_cache_expires_at ON cache(expires_at);
+  `);
+
   console.log('Database tables created successfully');
 }
 
@@ -239,4 +337,5 @@ module.exports = {
   execute,
   closeDatabase,
   getDbPath,
+  getMigrationStatus,
 };

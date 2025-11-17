@@ -11,7 +11,7 @@ const isElectron = typeof window !== 'undefined' && window.electronAPI;
 /**
  * Execute a database query
  */
-async function query<T>(sql: string, params: any[] = []): Promise<T[]> {
+export async function dbQuery<T = any>(sql: string, params: any[] = []): Promise<T[]> {
   if (!isElectron) {
     console.warn('Database not available in web mode');
     return [];
@@ -28,18 +28,27 @@ async function query<T>(sql: string, params: any[] = []): Promise<T[]> {
 /**
  * Execute a database statement
  */
-async function execute(sql: string, params: any[] = []): Promise<void> {
+export async function dbExecute(sql: string, params: any[] = []): Promise<any> {
   if (!isElectron) {
     console.warn('Database not available in web mode');
-    return;
+    return { changes: 0 };
   }
 
   try {
-    await window.electronAPI.dbExecute(sql, params);
+    return await window.electronAPI.dbExecute(sql, params);
   } catch (error) {
     console.error('Database execute error:', error);
     throw error;
   }
+}
+
+// Legacy function names for backwards compatibility
+async function query<T>(sql: string, params: any[] = []): Promise<T[]> {
+  return dbQuery<T>(sql, params);
+}
+
+async function execute(sql: string, params: any[] = []): Promise<any> {
+  return dbExecute(sql, params);
 }
 
 // User operations
