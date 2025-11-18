@@ -1,13 +1,13 @@
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import App from './App';
 
-// Placeholder screens (will be created in later steps)
-const HomeScreen = () => <div>Home Screen - Coming Soon</div>;
-const ProfileSelectScreen = () => <div>Profile Select - Coming Soon</div>;
-const LearningScreen = () => <div>Learning Screen - Coming Soon</div>;
-const SettingsScreen = () => <div>Settings Screen - Coming Soon</div>;
-const ProgressScreen = () => <div>Progress Screen - Coming Soon</div>;
-const ParentDashboard = () => <div>Parent Dashboard - Coming Soon</div>;
+// Import actual screen components (Steps 91-100)
+import HomeScreen from './screens/HomeScreen';
+import ProfileSelectScreen from './screens/ProfileSelectScreen';
+import LearningScreen from './screens/LearningScreen';
+import SettingsScreen from './screens/SettingsScreen';
+import ProgressScreen from './screens/ProgressScreen';
+import ParentDashboard from './screens/ParentDashboard';
 
 // Router configuration
 export const router = createBrowserRouter([
