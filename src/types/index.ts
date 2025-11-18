@@ -24,6 +24,13 @@ export interface UserSettings {
   volume: number; // 0-100
   hapticFeedback: boolean;
   keyboardTheme: string;
+  // Audio volume controls (Steps 191-200)
+  soundVolume?: number; // 0-1
+  musicVolume?: number; // 0-1
+  voiceVolume?: number; // 0-1
+  voiceEnabled?: boolean;
+  soundscapeEnabled?: boolean;
+  soundscapeVolume?: number; // 0-1
 }
 
 // Learning and Progress Types
