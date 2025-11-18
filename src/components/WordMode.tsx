@@ -4,7 +4,7 @@
  */
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSettingsStore } from '../store/useSettingsStore';
 
 export interface WordPracticeProps {
@@ -28,8 +28,6 @@ export default function WordMode({
 
   const currentWord = words[currentWordIndex];
 
-  // TODO: Connect to keyboard input
-  // @ts-expect-error - Function will be used when keyboard input is implemented
   const handleKeyPress = (key: string) => {
     if (key === 'Backspace') {
       setTyped(typed.slice(0, -1));
@@ -63,6 +61,21 @@ export default function WordMode({
       }
     }
   };
+
+  // Connect keyboard input
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Backspace') {
+        event.preventDefault();
+        handleKeyPress('Backspace');
+      } else if (event.key.length === 1) {
+        handleKeyPress(event.key);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [typed, currentWord, currentWordIndex, correct, mistakes]);
 
   const progress = ((currentWordIndex / words.length) * 100);
 

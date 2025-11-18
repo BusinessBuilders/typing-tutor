@@ -4,7 +4,7 @@
  */
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSettingsStore } from '../store/useSettingsStore';
 
 export interface LetterPracticeProps {
@@ -22,9 +22,7 @@ export default function LetterMode({
   const [attempts, setAttempts] = useState(0);
   const [correct, setCorrect] = useState(0);
 
-  // TODO: Connect to keyboard input
-  // @ts-expect-error - Function will be used when keyboard input is implemented
-  const _handleKeyPress = (key: string) => {
+  const handleKeyPress = (key: string) => {
     setAttempts(attempts + 1);
 
     if (key.toLowerCase() === letter.toLowerCase()) {
@@ -37,6 +35,19 @@ export default function LetterMode({
       }
     }
   };
+
+  // Connect keyboard input
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Only handle alphanumeric keys
+      if (event.key.length === 1 && /[a-zA-Z]/.test(event.key)) {
+        handleKeyPress(event.key);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [attempts, correct, letter]);
 
   const accuracy = attempts > 0 ? (correct / attempts) * 100 : 0;
 

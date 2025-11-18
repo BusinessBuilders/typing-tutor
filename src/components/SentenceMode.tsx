@@ -4,7 +4,7 @@
  */
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSettingsStore } from '../store/useSettingsStore';
 
 // Sample sentences by difficulty
@@ -65,8 +65,6 @@ export default function SentenceMode({
 
   const currentSentence = sentences[currentIndex];
 
-  // TODO: Connect to keyboard input
-  // @ts-expect-error - Function will be used when keyboard input is implemented
   const handleKeyPress = (key: string) => {
     if (key === 'Backspace') {
       setTyped(typed.slice(0, -1));
@@ -99,6 +97,27 @@ export default function SentenceMode({
       setMistakes(mistakes + 1);
     }
   };
+
+  // Connect keyboard input
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Prevent default for backspace (don't navigate back)
+      if (event.key === 'Backspace') {
+        event.preventDefault();
+      }
+
+      // Handle special keys
+      if (event.key === 'Backspace') {
+        handleKeyPress('Backspace');
+      } else if (event.key.length === 1) {
+        // Regular character
+        handleKeyPress(event.key);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [typed, currentSentence, currentIndex, correct, mistakes]);
 
   const progress = ((currentIndex + 1) / sentences.length) * 100;
 
@@ -256,8 +275,6 @@ export function SentenceWordByWord({ sentence }: { sentence: string }) {
 
   const currentWord = words[currentWordIndex];
 
-  // TODO: Connect to keyboard input
-  // @ts-expect-error - Function will be used when keyboard input is implemented
   const handleKeyPress = (key: string) => {
     if (key === 'Backspace') {
       setTyped(typed.slice(0, -1));
@@ -277,6 +294,23 @@ export function SentenceWordByWord({ sentence }: { sentence: string }) {
       setTyped(newTyped);
     }
   };
+
+  // Connect keyboard input
+  useEffect(() => {
+    if (completed) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Backspace') {
+        event.preventDefault();
+        handleKeyPress('Backspace');
+      } else if (event.key.length === 1) {
+        handleKeyPress(event.key);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [typed, currentWord, currentWordIndex, completed]);
 
   return (
     <div className="bg-white rounded-2xl shadow-xl p-8">
