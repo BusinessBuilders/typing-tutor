@@ -1,4 +1,5 @@
 const { app, BrowserWindow, ipcMain } = require('electron');
+const { autoUpdater } = require('electron-updater'); // Step 337: Auto-updates
 const path = require('path');
 const fs = require('fs');
 const { initializeDatabase, query, execute, closeDatabase } = require('./database.cjs');
@@ -129,4 +130,44 @@ ipcMain.handle('db:execute', async (event, sql, params) => {
 app.on('before-quit', () => {
   // Close database connection
   closeDatabase();
+});
+
+// Step 337: Auto-update configuration
+autoUpdater.autoDownload = false;
+autoUpdater.autoInstallOnAppQuit = true;
+
+autoUpdater.on('update-available', (info) => {
+  if (mainWindow) {
+    mainWindow.webContents.send('update-available', info);
+  }
+});
+
+autoUpdater.on('update-downloaded', (info) => {
+  if (mainWindow) {
+    mainWindow.webContents.send('update-downloaded', info);
+  }
+});
+
+autoUpdater.on('error', (error) => {
+  console.error('Update error:', error);
+});
+
+// Check for updates on startup (production only)
+app.on('ready', () => {
+  if (!isDevelopment) {
+    autoUpdater.checkForUpdatesAndNotify();
+  }
+});
+
+// IPC handler for manual update check
+ipcMain.handle('check-for-updates', async () => {
+  return await autoUpdater.checkForUpdates();
+});
+
+ipcMain.handle('download-update', async () => {
+  return await autoUpdater.downloadUpdate();
+});
+
+ipcMain.handle('install-update', () => {
+  autoUpdater.quitAndInstall();
 });
