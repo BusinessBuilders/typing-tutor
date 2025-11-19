@@ -90,7 +90,7 @@ const LearningScreen: React.FC = () => {
           item = contentGenerator.getRandomLetter();
           break;
         case 'words':
-          item = await contentGenerator.generateWord('easy');
+          item = await contentGenerator.generateWord();
           break;
         case 'sentences':
           item = await contentGenerator.generateSentence();
