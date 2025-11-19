@@ -7,7 +7,7 @@ import { UnsplashService } from '../services/images/unsplashService';
 import { usePetStore } from '../store/usePetStore';
 import { PetDisplay } from '../components/PetSystem';
 import { speak, initializeTTS, isSupported as isTTSSupported } from '../services/audio/textToSpeechService';
-import { VirtualKeyboard } from '../components/VirtualKeyboard';
+import VirtualKeyboard from '../components/VirtualKeyboard';
 import { useSettingsStore } from '../store/useSettingsStore';
 
 /**
