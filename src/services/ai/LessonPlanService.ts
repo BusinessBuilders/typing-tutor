@@ -181,44 +181,47 @@ export class LessonPlanService {
     const sessionNumber = lessonPlan.currentSession + 1;
 
     const prompt = `
-You are a creative children's writer creating an engaging, progressive story for a ${lessonPlan.childAge}-year-old child with autism.
+You are an award-winning children's author creating a captivating, educational story for a ${lessonPlan.childAge}-year-old child with autism.
 
-🎯 TOPIC: ${lessonPlan.title.toUpperCase()}
-⚠️ YOU MUST WRITE ABOUT: ${lessonPlan.title.toUpperCase()}
-📚 THIS LESSON IS ABOUT: ${lessonPlan.title.toUpperCase()}
+🎯 STORY TOPIC: ${lessonPlan.title.toUpperCase()}
+📖 Part ${sessionNumber} of ${lessonPlan.totalSessions}
 
-Session ${sessionNumber} of ${lessonPlan.totalSessions}
+${previousContent ? `THE STORY SO FAR:\n${previousContent}\n\n✨ Now continue the story with the next exciting part!` : '✨ This is the BEGINNING of an amazing story!'}
 
-${previousContent ? `THE STORY SO FAR:\n${previousContent}\n` : 'This is the BEGINNING of the story.'}
+STORY QUALITY REQUIREMENTS:
+✅ Create vivid, engaging descriptions that spark imagination
+✅ Use sensory details (what you see, hear, feel)
+✅ Include emotional moments that connect with the reader
+✅ Make every sentence interesting and meaningful
+✅ Build excitement and wonder throughout
+✅ Create a flowing narrative that feels complete
 
-CRITICAL RULES - DO NOT REPEAT:
-❌ DO NOT use the same words or phrases from previous parts
-❌ DO NOT repeat sentence structures
-❌ DO NOT start multiple sentences the same way
-✅ MOVE THE STORY FORWARD with NEW events
-✅ Add NEW details, NEW actions, or NEW discoveries
-✅ Build on what happened before, don't retell it
+CRITICAL RULES:
+❌ DO NOT repeat words, phrases, or sentence patterns from previous parts
+❌ DO NOT be boring or generic - make it SPECIAL
+❌ DO NOT lose focus - every sentence advances the story
+✅ Each part should reveal something new and exciting
+✅ Paint pictures with words - help the child visualize the scene
+✅ Make them WANT to keep reading
 
-STORY STRUCTURE FOR SESSION ${sessionNumber}:
+NARRATIVE STRUCTURE FOR THIS PART:
 ${this.getStoryGuidelines(lessonPlan.title, sessionNumber, lessonPlan.totalSessions)}
 
-WHAT SHOULD HAPPEN NOW:
+WHAT HAPPENS IN THIS PART:
 ${this.getSessionAction(sessionNumber, lessonPlan.totalSessions, lessonPlan.title)}
 
-FORMATTING RULES:
-- Use lowercase letters only
-- Simple, clear sentences (6-12 words each)
+WRITING STYLE:
+- Use lowercase letters only (autism-friendly)
+- Write 5-6 clear, flowing sentences
+- Use simple but engaging vocabulary
+- Each sentence should be 8-15 words
 - NO punctuation except periods
-- Write exactly 4-5 sentences
-- Make it exciting and different from previous parts
-- Child-friendly vocabulary
-- MUST be about: ${lessonPlan.title.toUpperCase()}
+- Make it feel like a real story, not just facts
+- Topic focus: ${lessonPlan.title}
 
-${previousContent ? '⚠️ IMPORTANT: Continue with something NEW about ' + lessonPlan.title.toUpperCase() + '. Do not repeat what already happened. Move forward!' : 'Start with an exciting opening about ' + lessonPlan.title.toUpperCase() + '.'}
+${previousContent ? '⚠️ IMPORTANT: This is part ' + sessionNumber + ' - continue the journey! Add new discoveries, emotions, or events. Keep the magic alive!' : '⚠️ IMPORTANT: Hook the reader from the first sentence! Make them excited about ' + lessonPlan.title + '!'}
 
-⚠️ REMINDER: Every sentence MUST be about ${lessonPlan.title.toUpperCase()}. Do NOT write about unrelated topics like stars, space, or anything else!
-
-Format: Provide ONLY the 4-5 new sentences about ${lessonPlan.title.toUpperCase()}, one per line. No commentary, no labels.
+Format: Provide ONLY the 5-6 story sentences, one per line. No labels, no commentary - pure storytelling magic.
 `;
 
     try {
@@ -388,47 +391,84 @@ Format: List sessions 1-${template.suggestedSessions} with a one-line descriptio
    */
   private getStoryGuidelines(title: string, sessionNumber: number, totalSessions: number): string {
     const progress = sessionNumber / totalSessions;
+    const titleLower = title.toLowerCase();
 
-    if (title.toLowerCase().includes('story')) {
+    if (titleLower.includes('story') || titleLower.includes('world') || titleLower.includes('invent')) {
+      // Classic story arc structure
       if (sessionNumber === 1) {
-        return `- Introduce a main character (give them a name and personality)
-- Set the scene (where are they?)
-- Start with something interesting happening
-- Make the character likeable and relatable
-Example: "lily the dragon loved to bake cookies. she lived in a cozy cave by the mountains. one morning she woke up with a great idea."`;
-      } else if (progress < 0.5) {
-        return `- Develop the story naturally
-- Show the character doing something or discovering something
-- Add one new element or challenge
-- Keep it positive and encouraging`;
-      } else if (progress < 0.8) {
-        return `- Build toward a climax or exciting moment
-- Show the character overcoming challenges
-- Keep the energy and excitement building
-- Maintain continuity with earlier parts`;
+        return `OPENING - Set the magical scene:
+- Introduce a memorable character with personality (name, traits, what makes them special)
+- Paint a vivid picture of where they are (sights, sounds, feelings)
+- Hook the reader with something intriguing or exciting
+- Create a warm, inviting atmosphere
+Example tone: "ruby the robot woke up in her treehouse workshop. bright sunlight streamed through the windows. today felt different somehow. she had an amazing idea bubbling in her mind."`;
+      } else if (progress <= 0.4) {
+        return `DEVELOPMENT - The adventure begins:
+- Show the character taking action on their idea or discovering something new
+- Add sensory details that bring the scene to life
+- Introduce a small challenge or something unexpected
+- Build curiosity about what happens next
+- Keep the tone positive and adventurous`;
+      } else if (progress <= 0.7) {
+        return `RISING ACTION - Things get exciting:
+- The challenge becomes more interesting (but not scary)
+- Show the character being creative or brave
+- Add surprising discoveries or helpers
+- Build emotional connection - how does the character feel?
+- Increase the sense of wonder and possibility`;
+      } else if (sessionNumber < totalSessions) {
+        return `CLIMAX - The most exciting moment:
+- The character puts their plan into action
+- Show them using what they learned earlier
+- Make it thrilling but achievable
+- Include sensory details of the big moment
+- Build to a satisfying peak of excitement`;
       } else {
-        return `- Bring the story to a satisfying conclusion
-- Show how things worked out
-- End on a positive, uplifting note
-- Tie back to earlier parts of the story`;
+        return `CONCLUSION - A heartwarming ending:
+- Show the positive outcome of the character's efforts
+- Reveal what they learned or how they grew
+- Tie back to the beginning - show how far they've come
+- End with joy, pride, or peaceful contentment
+- Leave the reader feeling inspired and happy`;
       }
-    } else if (title.toLowerCase().includes('space') || title.toLowerCase().includes('ocean') || title.toLowerCase().includes('animal')) {
+    } else if (titleLower.includes('space') || titleLower.includes('ocean') || titleLower.includes('animal') || titleLower.includes('dinosaur')) {
+      // Educational narrative structure
       if (sessionNumber === 1) {
-        return `- Start with an exciting fact or discovery
-- Use vivid, descriptive language
-- Make it feel like an adventure
-Example: "mars is called the red planet. it has huge mountains and deep canyons. robots drive on mars and take pictures."`;
+        return `INTRODUCTION - Spark wonder and curiosity:
+- Open with a fascinating fact that captures attention
+- Use vivid imagery to help visualize the subject
+- Make it feel like discovering a secret or treasure
+- Build excitement about learning more
+Example tone: "deep in the dark ocean lives a creature that glows like magic. the jellyfish floats gracefully through the water. its body shimmers with beautiful colors. watching it is like seeing a underwater light show."`;
+      } else if (progress <= 0.5) {
+        return `EXPLORATION - Discover amazing details:
+- Reveal fascinating facts that build on what we know
+- Use comparisons to familiar things to help understanding
+- Include sensory details (what it looks/sounds/feels like)
+- Show why this is amazing or special
+- Maintain a sense of discovery and wonder`;
+      } else if (sessionNumber < totalSessions) {
+        return `DEEP DIVE - The most amazing parts:
+- Share the most incredible fact or ability
+- Explain how/why in simple but engaging terms
+- Create "wow" moments of understanding
+- Connect to the bigger picture
+- Build appreciation and respect for the subject`;
       } else {
-        return `- Build on previous facts
-- Add new interesting information
-- Make connections to what we already learned
-- Keep it educational but exciting`;
+        return `CONCLUSION - Why it matters:
+- Summarize the incredible journey of learning
+- Explain why this subject is important or special
+- Connect to how we can help or appreciate it
+- Leave them with lasting wonder
+- End with an inspiring thought or call to care`;
       }
     } else {
-      return `- Create engaging, imaginative content
-- Build naturally on previous sessions
-- Keep the child interested and motivated
-- Use positive, encouraging language`;
+      return `CREATIVE NARRATIVE - Let imagination soar:
+- Use vivid sensory details (sights, sounds, textures)
+- Build naturally on everything that came before
+- Add surprising twists or delightful discoveries
+- Create emotional moments (joy, excitement, wonder)
+- Make every sentence count toward the journey`;
     }
   }
 

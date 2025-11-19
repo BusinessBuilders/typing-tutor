@@ -34,6 +34,7 @@ const AiLessonScreen: React.FC = () => {
   const { pet, addXP } = usePetStore();
   const { settings } = useSettingsStore();
   const [showKeyboard, setShowKeyboard] = useState(false);
+  const [isReadingStory, setIsReadingStory] = useState(false);
 
   const lessonService = new LessonPlanService('openai');
   const unsplashService = new UnsplashService();
@@ -196,6 +197,23 @@ const AiLessonScreen: React.FC = () => {
     }
   };
 
+  // Automatically read the full story when lesson completes
+  useEffect(() => {
+    if (isComplete && lessonPlan && ttsEnabled && !isReadingStory) {
+      setIsReadingStory(true);
+
+      // Combine all sessions into one narrative
+      const fullStory = lessonPlan.sessions
+        .map((session, index) => `Part ${index + 1}. ${session.content}`)
+        .join('. ');
+
+      // Automatically speak the full story
+      speak(fullStory, () => {
+        setIsReadingStory(false);
+      });
+    }
+  }, [isComplete, lessonPlan, ttsEnabled]);
+
   // Completion screen
   if (isComplete && lessonPlan) {
     return (
@@ -222,7 +240,15 @@ const AiLessonScreen: React.FC = () => {
           </p>
 
           <div className="bg-gradient-to-r from-yellow-100 to-orange-100 rounded-2xl p-8 mb-8">
-            <h2 className="text-3xl font-bold text-gray-800 mb-4">Your Story</h2>
+            <div className="flex items-center justify-center gap-3 mb-4">
+              <h2 className="text-3xl font-bold text-gray-800">Your Complete Story</h2>
+              {isReadingStory && <span className="text-3xl animate-pulse">🔊</span>}
+            </div>
+            {isReadingStory && (
+              <p className="text-center text-lg text-gray-700 mb-4 font-semibold">
+                🎧 Listen as your story is read aloud...
+              </p>
+            )}
             <div className="text-left space-y-4 max-h-96 overflow-y-auto">
               {lessonPlan.sessions.map((session, index) => (
                 <div key={index} className="bg-white rounded-xl p-4 shadow-sm">
