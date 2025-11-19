@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import { useBadgeSystem } from '../components/BadgeSystem';
 
 /**
  * ProgressScreen Component - Step 97
@@ -33,6 +34,7 @@ interface ProgressStats {
 
 const ProgressScreen: React.FC = () => {
   const navigate = useNavigate();
+  const { badges, getUnlockedBadges } = useBadgeSystem();
 
   // Mock data - in real app, this would come from database
   const [stats] = useState<ProgressStats>({
@@ -45,23 +47,11 @@ const ProgressScreen: React.FC = () => {
     lessonsCompleted: 23,
     currentStreak: 7,
     longestStreak: 12,
-    badgesEarned: 8,
+    badgesEarned: getUnlockedBadges().length,
   });
 
-  const achievements = [
-    { id: 1, name: 'First Steps', icon: '👣', earned: true, description: 'Complete your first lesson' },
-    { id: 2, name: 'Speed Demon', icon: '⚡', earned: true, description: 'Type 30 WPM or faster' },
-    { id: 3, name: 'Accuracy Master', icon: '🎯', earned: true, description: 'Achieve 95% accuracy' },
-    { id: 4, name: 'Week Warrior', icon: '🔥', earned: true, description: '7-day streak' },
-    { id: 5, name: 'Word Wizard', icon: '✨', earned: true, description: 'Type 1000 words' },
-    { id: 6, name: 'Sentence Star', icon: '⭐', earned: true, description: 'Complete 10 sentence lessons' },
-    { id: 7, name: 'Story Explorer', icon: '📖', earned: true, description: 'Complete a story' },
-    { id: 8, name: 'Persistent Learner', icon: '💪', earned: true, description: 'Practice for 2 hours' },
-    { id: 9, name: 'Fast Fingers', icon: '🏃', earned: false, description: 'Type 50 WPM or faster' },
-    { id: 10, name: 'Perfect Practice', icon: '💯', earned: false, description: 'Achieve 100% accuracy' },
-    { id: 11, name: 'Month Master', icon: '📅', earned: false, description: '30-day streak' },
-    { id: 12, name: 'Ultimate Typer', icon: '👑', earned: false, description: 'Complete all lessons' },
-  ];
+  // Use real badges from BadgeSystem
+  const achievements = badges;
 
   const recentSessions = [
     { date: '2024-11-18', wpm: 32, accuracy: 96, duration: 15, lessonType: 'Words' },
@@ -221,13 +211,13 @@ const ProgressScreen: React.FC = () => {
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.8 + index * 0.05 }}
                 className={`p-4 rounded-xl text-center transition-all ${
-                  achievement.earned
+                  achievement.unlocked
                     ? 'bg-gradient-to-br from-yellow-100 to-orange-100 border-2 border-yellow-400'
                     : 'bg-gray-100 opacity-50'
                 }`}
                 title={achievement.description}
               >
-                <div className="text-4xl mb-2">{achievement.icon}</div>
+                <div className={`text-4xl mb-2 ${achievement.unlocked ? '' : 'grayscale opacity-50'}`}>{achievement.icon}</div>
                 <div className="text-xs font-semibold text-gray-700 leading-tight">
                   {achievement.name}
                 </div>
