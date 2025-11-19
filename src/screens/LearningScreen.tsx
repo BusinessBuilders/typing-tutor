@@ -7,6 +7,7 @@ import { PetDisplay } from '../components/PetSystem';
 import { speak, initializeTTS, isSupported as isTTSSupported } from '../services/audio/textToSpeechService';
 import VirtualKeyboard from '../components/VirtualKeyboard';
 import { useSettingsStore } from '../store/useSettingsStore';
+import { TherapeuticContentGenerator } from '../services/ai/TherapeuticContentGenerator';
 
 /**
  * LearningScreen Component - Step 95
@@ -57,6 +58,8 @@ const LearningScreen: React.FC = () => {
 
   const unsplashService = new UnsplashService();
   const [ttsEnabled] = useState(isTTSSupported());
+  const [contentGenerator] = useState(() => new TherapeuticContentGenerator());
+  const [isLoadingContent, setIsLoadingContent] = useState(false);
 
   // Initialize TTS on mount
   useEffect(() => {
@@ -75,37 +78,48 @@ const LearningScreen: React.FC = () => {
     return meaningfulWord || words[0] || 'nature';
   };
 
-  // Simple content pools (no punctuation for easier practice)
-  const contentPools = {
-    letters: ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'],
-    words: ['cat', 'dog', 'sun', 'moon', 'star', 'tree', 'fish', 'bird', 'car', 'book', 'ball', 'cake', 'apple', 'house', 'flower'],
-    sentences: [
-      'the cat is sleeping',
-      'I love my dog',
-      'the sun is bright',
-      'birds fly in the sky',
-      'I can type well',
-      'reading is fun',
-    ],
-    stories: [
-      'the dragon likes to play',
-      'a knight rides a horse',
-      'the kitten plays with yarn',
-      'the unicorn has a rainbow mane',
-    ],
-  };
+  // Get AI-generated therapeutic content
+  const getContentForMode = async (learningMode: LearningMode): Promise<LearningContent> => {
+    setIsLoadingContent(true);
 
-  // Get content for current mode and index
-  const getContentForMode = (learningMode: LearningMode, index: number): LearningContent => {
-    const items = contentPools[learningMode];
-    const item = items[index % items.length];
+    try {
+      let item: string;
 
-    return {
-      mode: learningMode,
-      currentItem: item,
-      description: learningMode === 'letters' ? `Type the letter ${item}` : `Type: ${item}`,
-      difficulty: { letters: 1, words: 2, sentences: 3, stories: 4 }[learningMode],
-    };
+      switch (learningMode) {
+        case 'letters':
+          item = contentGenerator.getRandomLetter();
+          break;
+        case 'words':
+          item = await contentGenerator.generateWord('easy');
+          break;
+        case 'sentences':
+          item = await contentGenerator.generateSentence();
+          break;
+        case 'stories':
+          item = await contentGenerator.generateStory();
+          break;
+        default:
+          item = 'a';
+      }
+
+      return {
+        mode: learningMode,
+        currentItem: item,
+        description: learningMode === 'letters' ? `Type the letter ${item}` : `Type: ${item}`,
+        difficulty: { letters: 1, words: 2, sentences: 3, stories: 4 }[learningMode],
+      };
+    } catch (error) {
+      console.error('Failed to generate content:', error);
+      // Fallback
+      return {
+        mode: learningMode,
+        currentItem: 'a',
+        description: 'Type: a',
+        difficulty: 1,
+      };
+    } finally {
+      setIsLoadingContent(false);
+    }
   };
 
   // Fetch image for current content
@@ -132,18 +146,27 @@ const LearningScreen: React.FC = () => {
     }
   };
 
+  // Load new content when mode or task changes
   useEffect(() => {
-    const content = getContentForMode(mode, taskIndex);
-    setCurrentContent(content);
+    const loadContent = async () => {
+      const content = await getContentForMode(mode);
+      setCurrentContent(content);
 
-    // Fetch image for words, sentences, and stories (not letters)
-    if (mode !== 'letters') {
-      // Extract meaningful subject from content for image search
-      const searchTerm = extractMeaningfulWord(content.currentItem);
-      fetchImage(searchTerm);
-    } else {
-      setImageUrl(null); // No images for letter mode
-    }
+      // AUTO-READ: Speak the content immediately when loaded
+      if (ttsEnabled && content.currentItem) {
+        speak(content.currentItem);
+      }
+
+      // Fetch image for words, sentences, and stories (not letters)
+      if (mode !== 'letters') {
+        const searchTerm = extractMeaningfulWord(content.currentItem);
+        fetchImage(searchTerm);
+      } else {
+        setImageUrl(null);
+      }
+    };
+
+    loadContent();
   }, [mode, taskIndex]);
 
   useEffect(() => {

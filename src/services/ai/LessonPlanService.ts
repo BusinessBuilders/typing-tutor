@@ -180,48 +180,59 @@ export class LessonPlanService {
     const aiService = AIServiceFactory.getProvider(this.aiProvider);
     const sessionNumber = lessonPlan.currentSession + 1;
 
+    // Extract forbidden words/phrases from previous content to force variety
+    const forbiddenPhrases = new Set<string>();
+    if (previousContent) {
+      const words = previousContent.toLowerCase().split(/\s+/);
+      // Get 2-3 word phrases
+      for (let i = 0; i < words.length - 2; i++) {
+        forbiddenPhrases.add(`${words[i]} ${words[i+1]}`);
+        forbiddenPhrases.add(`${words[i]} ${words[i+1]} ${words[i+2]}`);
+      }
+    }
+
+    const forbiddenList = Array.from(forbiddenPhrases).slice(0, 20).join(', ');
+
     const prompt = `
-You are an award-winning children's author creating a captivating, educational story for a ${lessonPlan.childAge}-year-old child with autism.
+You are creating part ${sessionNumber} of ${lessonPlan.totalSessions} for a ${lessonPlan.childAge}-year-old.
 
-🎯 STORY TOPIC: ${lessonPlan.title.toUpperCase()}
-📖 Part ${sessionNumber} of ${lessonPlan.totalSessions}
+TOPIC: ${lessonPlan.title}
 
-${previousContent ? `THE STORY SO FAR:\n${previousContent}\n\n✨ Now continue the story with the next exciting part!` : '✨ This is the BEGINNING of an amazing story!'}
+${previousContent ? `PREVIOUS PARTS:\n${previousContent}\n\n🚫 FORBIDDEN PHRASES (DO NOT USE ANY OF THESE):\n${forbiddenList}\n\nYou MUST write something COMPLETELY DIFFERENT from what came before!` : 'This is part 1 - create an exciting opening!'}
 
-STORY QUALITY REQUIREMENTS:
-✅ Create vivid, engaging descriptions that spark imagination
-✅ Use sensory details (what you see, hear, feel)
-✅ Include emotional moments that connect with the reader
-✅ Make every sentence interesting and meaningful
-✅ Build excitement and wonder throughout
-✅ Create a flowing narrative that feels complete
-
-CRITICAL RULES:
-❌ DO NOT repeat words, phrases, or sentence patterns from previous parts
-❌ DO NOT be boring or generic - make it SPECIAL
-❌ DO NOT lose focus - every sentence advances the story
-✅ Each part should reveal something new and exciting
-✅ Paint pictures with words - help the child visualize the scene
-✅ Make them WANT to keep reading
-
-NARRATIVE STRUCTURE FOR THIS PART:
-${this.getStoryGuidelines(lessonPlan.title, sessionNumber, lessonPlan.totalSessions)}
-
-WHAT HAPPENS IN THIS PART:
+WHAT TO WRITE NOW:
 ${this.getSessionAction(sessionNumber, lessonPlan.totalSessions, lessonPlan.title)}
 
-WRITING STYLE:
-- Use lowercase letters only (autism-friendly)
-- Write 5-6 clear, flowing sentences
-- Use simple but engaging vocabulary
-- Each sentence should be 8-15 words
-- NO punctuation except periods
-- Make it feel like a real story, not just facts
-- Topic focus: ${lessonPlan.title}
+STRICT REQUIREMENTS:
+${previousContent ? `
+❌ DO NOT use any of the forbidden phrases listed above
+❌ DO NOT use similar sentence patterns to previous parts
+❌ DO NOT repeat the same verbs, nouns, or adjectives
+✅ Use BRAND NEW words and descriptions
+✅ Create FRESH, ORIGINAL sentences
+✅ Show something that HASN'T been mentioned yet
+✅ Take the story in a NEW direction
+` : `
+✅ Create a captivating opening
+✅ Introduce the main idea clearly
+✅ Use vivid, sensory words
+✅ Make them curious about what happens next
+`}
 
-${previousContent ? '⚠️ IMPORTANT: This is part ' + sessionNumber + ' - continue the journey! Add new discoveries, emotions, or events. Keep the magic alive!' : '⚠️ IMPORTANT: Hook the reader from the first sentence! Make them excited about ' + lessonPlan.title + '!'}
+STORY GUIDELINES:
+${this.getStoryGuidelines(lessonPlan.title, sessionNumber, lessonPlan.totalSessions)}
 
-Format: Provide ONLY the 5-6 story sentences, one per line. No labels, no commentary - pure storytelling magic.
+FORMAT:
+- lowercase only
+- 5-6 sentences
+- each sentence 8-15 words
+- periods only, no other punctuation
+- simple, clear language
+- each sentence must be UNIQUE and NEW
+
+${sessionNumber > 1 ? `⚠️ CRITICAL: Look at what you've already written above. Your new sentences must use DIFFERENT words, DIFFERENT ideas, and DIFFERENT descriptions. NO REPETITION!` : ''}
+
+Write ONLY the ${sessionNumber > 1 ? 'new' : ''} sentences. One per line. Nothing else.
 `;
 
     try {
