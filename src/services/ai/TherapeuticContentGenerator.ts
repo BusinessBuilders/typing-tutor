@@ -71,6 +71,11 @@ export class TherapeuticContentGenerator {
       const stored = localStorage.getItem(STORAGE_KEY_CACHE);
       if (stored) {
         this.cache = JSON.parse(stored);
+
+        // IMPORTANT: Mark all cached items as used to prevent repeats
+        this.cache.words.forEach(w => this.usedContent.add(w.toLowerCase()));
+        this.cache.sentences.forEach(s => this.usedContent.add(s.toLowerCase()));
+        this.cache.stories.forEach(s => this.usedContent.add(s.toLowerCase()));
       }
     } catch (error) {
       console.error('Failed to load content cache:', error);
@@ -264,15 +269,26 @@ Return 10 stories separated by blank lines. Just the stories.`;
    * Get a word - uses cache, generates batch when needed
    */
   async generateWord(): Promise<string> {
-    // Check cache first
     if (this.cache.words.length < MIN_CACHE_SIZE) {
       const newWords = await this.generateWordBatch();
-      this.cache.words.push(...newWords);
+      const unused = newWords.filter(w => !this.usedContent.has(w.toLowerCase()));
+      this.cache.words.push(...unused);
       this.saveCache();
     }
 
-    // Get from cache
-    const word = this.cache.words.shift() || this.getFallbackWord();
+    // Get from cache, skip if already used
+    let word = this.cache.words.shift();
+    while (word && this.usedContent.has(word.toLowerCase()) && this.cache.words.length > 0) {
+      word = this.cache.words.shift();
+    }
+
+    if (!word || this.usedContent.has(word.toLowerCase())) {
+      const newWords = await this.generateWordBatch();
+      const unused = newWords.filter(w => !this.usedContent.has(w.toLowerCase()));
+      this.cache.words.push(...unused);
+      word = this.cache.words.shift() || this.getFallbackWord();
+    }
+
     this.saveCache();
     this.saveToHistory('words', word);
     return word;
@@ -284,11 +300,26 @@ Return 10 stories separated by blank lines. Just the stories.`;
   async generateSentence(): Promise<string> {
     if (this.cache.sentences.length < MIN_CACHE_SIZE) {
       const newSentences = await this.generateSentenceBatch();
-      this.cache.sentences.push(...newSentences);
+      // Filter out any that might have been used (double-check)
+      const unused = newSentences.filter(s => !this.usedContent.has(s.toLowerCase()));
+      this.cache.sentences.push(...unused);
       this.saveCache();
     }
 
-    const sentence = this.cache.sentences.shift() || this.getFallbackSentence();
+    // Get from cache, skip if already used
+    let sentence = this.cache.sentences.shift();
+    while (sentence && this.usedContent.has(sentence.toLowerCase()) && this.cache.sentences.length > 0) {
+      sentence = this.cache.sentences.shift(); // Skip used ones
+    }
+
+    // If we ran out or all were used, generate new batch
+    if (!sentence || this.usedContent.has(sentence.toLowerCase())) {
+      const newSentences = await this.generateSentenceBatch();
+      const unused = newSentences.filter(s => !this.usedContent.has(s.toLowerCase()));
+      this.cache.sentences.push(...unused);
+      sentence = this.cache.sentences.shift() || this.getFallbackSentence();
+    }
+
     this.saveCache();
     this.saveToHistory('sentences', sentence);
     return sentence;
