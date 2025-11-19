@@ -4,7 +4,7 @@
  */
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSettingsStore } from '../store/useSettingsStore';
 
 // Sample paragraphs by difficulty
@@ -44,8 +44,6 @@ export default function ParagraphPractice({
 
   const currentParagraph = paragraphs[currentIndex];
 
-  // TODO: Connect to keyboard input
-  // @ts-expect-error - Function will be used when keyboard input is implemented
   const handleKeyPress = (key: string) => {
     if (key === 'Backspace') {
       setTyped(typed.slice(0, -1));
@@ -76,6 +74,21 @@ export default function ParagraphPractice({
       setMistakes(mistakes + 1);
     }
   };
+
+  // Connect keyboard input
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Backspace') {
+        event.preventDefault();
+        handleKeyPress('Backspace');
+      } else if (event.key.length === 1) {
+        handleKeyPress(event.key);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [typed, currentParagraph, currentIndex, mistakes]);
 
   const progress = (typed.length / currentParagraph.length) * 100;
 
@@ -162,8 +175,6 @@ export function ParagraphWithHighlighting() {
 
   const [typed, setTyped] = useState('');
 
-  // TODO: Connect to keyboard input
-  // @ts-expect-error - Function will be used when keyboard input is implemented
   const handleKeyPress = (key: string) => {
     if (key === 'Backspace') {
       setTyped(typed.slice(0, -1));
@@ -175,6 +186,21 @@ export function ParagraphWithHighlighting() {
       setTyped(newTyped);
     }
   };
+
+  // Connect keyboard input
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Backspace') {
+        event.preventDefault();
+        handleKeyPress('Backspace');
+      } else if (event.key.length === 1) {
+        handleKeyPress(event.key);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [typed, paragraph]);
 
   return (
     <div className="bg-white rounded-2xl shadow-xl p-8">
@@ -233,8 +259,6 @@ export function MultiParagraphPractice() {
 
   const current = paragraphs[currentParagraph];
 
-  // TODO: Connect to keyboard input
-  // @ts-expect-error - Function will be used when keyboard input is implemented
   const handleKeyPress = (key: string) => {
     if (key === 'Backspace') {
       setTyped(typed.slice(0, -1));
@@ -252,6 +276,21 @@ export function MultiParagraphPractice() {
       setTyped(newTyped);
     }
   };
+
+  // Connect keyboard input
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Backspace') {
+        event.preventDefault();
+        handleKeyPress('Backspace');
+      } else if (event.key.length === 1) {
+        handleKeyPress(event.key);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [typed, current, currentParagraph]);
 
   return (
     <div className="bg-white rounded-2xl shadow-xl p-8">

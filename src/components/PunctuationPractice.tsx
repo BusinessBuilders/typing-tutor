@@ -4,7 +4,7 @@
  */
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSettingsStore } from '../store/useSettingsStore';
 
 // Punctuation marks to practice
@@ -244,8 +244,6 @@ export function QuotationMarksPractice() {
   const current = dialogues[currentIndex];
   const correctSentence = `${current.speaker}, "${current.quote}."`;
 
-  // TODO: Connect to keyboard input
-  // @ts-expect-error - Function will be used when keyboard input is implemented
   const handleKeyPress = (key: string) => {
     if (key === 'Backspace') {
       setTyped(typed.slice(0, -1));
@@ -265,6 +263,21 @@ export function QuotationMarksPractice() {
       setTyped(newTyped);
     }
   };
+
+  // Connect keyboard input
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Backspace') {
+        event.preventDefault();
+        handleKeyPress('Backspace');
+      } else if (event.key.length === 1) {
+        handleKeyPress(event.key);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [typed, correctSentence, currentIndex]);
 
   return (
     <div className="bg-white rounded-2xl shadow-xl p-8">

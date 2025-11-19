@@ -234,16 +234,37 @@ export function QuickWordPractice({ word }: { word: string }) {
   const [typed, setTyped] = useState('');
   const [completed, setCompleted] = useState(false);
 
-  // TODO: Connect to keyboard input
-  // @ts-expect-error - Function will be used when keyboard input is implemented
   const handleType = (char: string) => {
+    if (char === 'Backspace') {
+      setTyped(typed.slice(0, -1));
+      return;
+    }
+
     const newTyped = typed + char;
-    setTyped(newTyped);
 
     if (newTyped === word) {
       setCompleted(true);
+    } else if (word.startsWith(newTyped)) {
+      setTyped(newTyped);
     }
   };
+
+  // Connect keyboard input
+  useEffect(() => {
+    if (completed) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Backspace') {
+        event.preventDefault();
+        handleType('Backspace');
+      } else if (event.key.length === 1) {
+        handleType(event.key);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [typed, word, completed]);
 
   return (
     <div className="bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl shadow-xl p-8 text-white">

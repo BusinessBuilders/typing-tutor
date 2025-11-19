@@ -4,7 +4,7 @@
  */
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSettingsStore } from '../store/useSettingsStore';
 
 // Common word families
@@ -39,8 +39,6 @@ export default function WordFamilies({
 
   const currentWord = words[currentIndex];
 
-  // TODO: Connect to keyboard input
-  // @ts-expect-error - Function will be used when keyboard input is implemented
   const handleKeyPress = (key: string) => {
     if (key === 'Backspace') {
       setTyped(typed.slice(0, -1));
@@ -63,6 +61,21 @@ export default function WordFamilies({
       setTyped(newTyped);
     }
   };
+
+  // Connect keyboard input
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Backspace') {
+        event.preventDefault();
+        handleKeyPress('Backspace');
+      } else if (event.key.length === 1) {
+        handleKeyPress(event.key);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [typed, currentWord, currentIndex, correct]);
 
   return (
     <div className="bg-white rounded-2xl shadow-xl p-8">
