@@ -10,6 +10,8 @@ import AiLessonScreen from './screens/AiLessonScreen';
 import SettingsScreen from './screens/SettingsScreen';
 import ProgressScreen from './screens/ProgressScreen';
 import ParentDashboard from './screens/ParentDashboard';
+import CVCPracticeScreen from './screens/CVCPracticeScreen';
+import CompoundWordsScreen from './screens/CompoundWordsScreen';
 
 // Router configuration
 export const router = createBrowserRouter([
@@ -52,6 +54,14 @@ export const router = createBrowserRouter([
       {
         path: 'parent-dashboard',
         element: <ParentDashboard />,
+      },
+      {
+        path: 'cvc-practice',
+        element: <CVCPracticeScreen />,
+      },
+      {
+        path: 'compound-words',
+        element: <CompoundWordsScreen />,
       },
     ],
   },
