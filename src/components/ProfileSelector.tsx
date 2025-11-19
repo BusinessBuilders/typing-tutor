@@ -3,7 +3,7 @@
  * Step 94 - User profile creation and selection
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useUserStore, createUserProfile } from '../store/useUserStore';
 import { useAppStore } from '../store/useAppStore';
@@ -25,9 +25,9 @@ export default function ProfileSelector() {
   const { settings } = useSettingsStore();
 
   // Load profiles on mount
-  useState(() => {
+  useEffect(() => {
     loadProfiles();
-  });
+  }, []);
 
   async function loadProfiles() {
     try {
@@ -39,11 +39,17 @@ export default function ProfileSelector() {
   }
 
   async function handleCreateProfile() {
+    console.log('=== CREATE PROFILE CLICKED ===');
+    console.log('Name:', name);
+    console.log('Age:', age);
+
     if (!name.trim()) {
-      showNotification('Please enter a name', 'warning');
+      console.log('Name is empty, showing warning');
+      alert('Please enter a name');
       return;
     }
 
+    console.log('Creating profile...');
     setLoading(true);
     try {
       const newProfile = createUserProfile(
@@ -52,15 +58,21 @@ export default function ProfileSelector() {
       );
       newProfile.avatar = selectedAvatar;
 
+      console.log('New profile object:', newProfile);
+
       await UserDB.create(newProfile);
+      console.log('Profile saved to database');
+
       setUser(newProfile);
+      console.log('User set in store');
 
-      showNotification(`Welcome, ${newProfile.name}! 🎉`, 'success');
+      alert(`Welcome, ${newProfile.name}! 🎉`);
 
-      setScreen('home');
+      console.log('Navigating to home...');
+      window.location.href = '/';
     } catch (error) {
       console.error('Failed to create profile:', error);
-      showNotification('Failed to create profile. Please try again.', 'error');
+      alert('Failed to create profile: ' + error);
     } finally {
       setLoading(false);
     }

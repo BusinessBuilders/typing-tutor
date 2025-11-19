@@ -3,8 +3,10 @@ import App from './App';
 
 // Import actual screen components (Steps 91-100)
 import HomeScreen from './screens/HomeScreen';
-import ProfileSelectScreen from './screens/ProfileSelectScreen';
+import ProfileSelector from './components/ProfileSelector';
 import LearningScreen from './screens/LearningScreen';
+import LessonSelectionScreen from './screens/LessonSelectionScreen';
+import AiLessonScreen from './screens/AiLessonScreen';
 import SettingsScreen from './screens/SettingsScreen';
 import ProgressScreen from './screens/ProgressScreen';
 import ParentDashboard from './screens/ParentDashboard';
@@ -21,7 +23,7 @@ export const router = createBrowserRouter([
       },
       {
         path: 'profile-select',
-        element: <ProfileSelectScreen />,
+        element: <ProfileSelector />,
       },
       {
         path: 'learning',
@@ -30,6 +32,14 @@ export const router = createBrowserRouter([
       {
         path: 'learning/:level',
         element: <LearningScreen />,
+      },
+      {
+        path: 'lessons',
+        element: <LessonSelectionScreen />,
+      },
+      {
+        path: 'ai-lesson',
+        element: <AiLessonScreen />,
       },
       {
         path: 'settings',

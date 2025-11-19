@@ -49,8 +49,8 @@ export class UnsplashService {
    */
   async searchImages(options: ImageSearchOptions): Promise<UnsplashImage[]> {
     if (!this.isConfigured()) {
-      console.warn('Unsplash API key not configured');
-      return this.getFallbackImages(options.query);
+      console.warn('Unsplash API key not configured - using fallback');
+      return []; // Return empty array instead of broken fallback images
     }
 
     const { query, count = 5, orientation = 'landscape', contentFilter = 'high' } = options;
@@ -95,7 +95,7 @@ export class UnsplashService {
       return filtered.slice(0, count);
     } catch (error) {
       console.error('Unsplash API error:', error);
-      return this.getFallbackImages(query);
+      return []; // Return empty array when API fails
     }
   }
 

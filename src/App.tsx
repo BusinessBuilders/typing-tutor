@@ -4,14 +4,14 @@
  */
 
 import { useEffect } from 'react';
+import { Outlet, useNavigate } from 'react-router-dom';
 import { useUserStore } from './store/useUserStore';
 import { useSettingsStore } from './store/useSettingsStore';
-import { useAppStore } from './store/useAppStore';
 
 function App() {
   const { currentUser } = useUserStore();
   const { settings } = useSettingsStore();
-  const { currentScreen } = useAppStore();
+  const navigate = useNavigate();
 
   // Apply settings to DOM
   useEffect(() => {
@@ -20,6 +20,13 @@ function App() {
     root.setAttribute('data-font-size', settings.fontSize || 'medium');
     root.setAttribute('data-reduced-motion', settings.reducedMotion ? 'true' : 'false');
   }, [settings]);
+
+  // Redirect to profile select if no user
+  useEffect(() => {
+    if (!currentUser) {
+      navigate('/profile-select');
+    }
+  }, [currentUser, navigate]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50">
@@ -37,18 +44,7 @@ function App() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 py-8">
-        {currentScreen === 'home' && (
-          <div className="text-center py-20">
-            <div className="text-8xl mb-8">✨</div>
-            <h2 className="text-4xl font-bold mb-4">Welcome to Typing Tutor!</h2>
-            <p className="text-xl text-gray-600 mb-8">
-              Learn to type at your own pace with AI-powered assistance
-            </p>
-            <button className="px-8 py-4 bg-primary-600 text-white text-lg rounded-lg hover:bg-primary-700 transition-colors">
-              {currentUser ? 'Start Practicing' : 'Create Profile'}
-            </button>
-          </div>
-        )}
+        <Outlet />
       </main>
 
       <footer className="bg-gray-50 mt-auto py-6">

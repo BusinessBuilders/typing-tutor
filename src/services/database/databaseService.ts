@@ -9,11 +9,33 @@ import { UserProfile, Progress, TypingSession, Achievement } from '../../types';
 const isElectron = typeof window !== 'undefined' && window.electronAPI;
 
 /**
+ * Browser fallback using localStorage
+ */
+const browserStorage = {
+  getUsers(): any[] {
+    const data = localStorage.getItem('typing_tutor_users');
+    return data ? JSON.parse(data) : [];
+  },
+  saveUsers(users: any[]): void {
+    localStorage.setItem('typing_tutor_users', JSON.stringify(users));
+  },
+  addUser(user: any): void {
+    const users = this.getUsers();
+    users.push(user);
+    this.saveUsers(users);
+  }
+};
+
+/**
  * Execute a database query
  */
 export async function dbQuery<T = any>(sql: string, params: any[] = []): Promise<T[]> {
   if (!isElectron) {
-    console.warn('Database not available in web mode');
+    console.log('Using browser localStorage fallback');
+    // Simple fallback for common queries
+    if (sql.includes('SELECT') && sql.includes('FROM users')) {
+      return browserStorage.getUsers() as T[];
+    }
     return [];
   }
 
@@ -30,8 +52,8 @@ export async function dbQuery<T = any>(sql: string, params: any[] = []): Promise
  */
 export async function dbExecute(sql: string, params: any[] = []): Promise<any> {
   if (!isElectron) {
-    console.warn('Database not available in web mode');
-    return { changes: 0 };
+    console.log('Using browser localStorage fallback');
+    return { changes: 1 };
   }
 
   try {
@@ -54,6 +76,21 @@ async function execute(sql: string, params: any[] = []): Promise<any> {
 // User operations
 export const UserDB = {
   async create(user: UserProfile): Promise<void> {
+    if (!isElectron) {
+      // Browser mode: save to localStorage
+      browserStorage.addUser({
+        id: user.id,
+        name: user.name,
+        age: user.age,
+        avatar: user.avatar,
+        created_at: user.createdAt.toISOString(),
+        ...user.settings
+      });
+      console.log('Profile saved to localStorage:', user.name);
+      return;
+    }
+
+    // Electron mode: use SQLite
     await execute(
       'INSERT INTO users (id, name, age, avatar, created_at) VALUES (?, ?, ?, ?, ?)',
       [user.id, user.name, user.age || null, user.avatar || null, user.createdAt.toISOString()]

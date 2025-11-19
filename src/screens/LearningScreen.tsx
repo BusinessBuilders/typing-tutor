@@ -1,6 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate, useParams } from 'react-router-dom';
+import { UnsplashService } from '../services/images/unsplashService';
+import { usePetStore } from '../store/usePetStore';
+import { PetDisplay } from '../components/PetSystem';
+import { speak, initializeTTS, isSupported as isTTSSupported } from '../services/audio/textToSpeechService';
+import { VirtualKeyboard } from '../components/VirtualKeyboard';
+import { useSettingsStore } from '../store/useSettingsStore';
 
 /**
  * LearningScreen Component - Step 95
@@ -32,7 +38,10 @@ const LearningScreen: React.FC = () => {
   const navigate = useNavigate();
   const { level } = useParams<{ level?: string }>();
   const [mode, setMode] = useState<LearningMode>((level as LearningMode) || 'letters');
+  const { pet, addXP } = usePetStore();
+  const { settings } = useSettingsStore();
   const [currentInput, setCurrentInput] = useState('');
+  const [showKeyboard, setShowKeyboard] = useState(false);
   const [currentContent, setCurrentContent] = useState<LearningContent>({
     mode: 'letters',
     currentItem: 'A',
@@ -42,68 +51,146 @@ const LearningScreen: React.FC = () => {
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   const [score, setScore] = useState(0);
   const [streak, setStreak] = useState(0);
+  const [taskIndex, setTaskIndex] = useState(0);
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [loadingImage, setLoadingImage] = useState(false);
 
-  // Sample content for each mode
-  const getContentForMode = (learningMode: LearningMode): LearningContent => {
-    const content: Record<LearningMode, LearningContent> = {
-      letters: {
-        mode: 'letters',
-        currentItem: 'A',
-        description: 'Type the letter A',
-        difficulty: 1,
-      },
-      words: {
-        mode: 'words',
-        currentItem: 'cat',
-        description: 'Type the word: cat',
-        difficulty: 2,
-      },
-      sentences: {
-        mode: 'sentences',
-        currentItem: 'The cat sat on the mat.',
-        description: 'Type this sentence',
-        difficulty: 3,
-      },
-      stories: {
-        mode: 'stories',
-        currentItem: 'Once upon a time, there was a friendly dragon who loved to read books.',
-        description: 'Continue the story',
-        difficulty: 4,
-      },
+  const unsplashService = new UnsplashService();
+  const [ttsEnabled] = useState(isTTSSupported());
+
+  // Initialize TTS on mount
+  useEffect(() => {
+    if (ttsEnabled) {
+      initializeTTS();
+    }
+  }, [ttsEnabled]);
+
+  // Extract meaningful word for image search (skip common words)
+  const extractMeaningfulWord = (text: string): string => {
+    const skipWords = ['i', 'the', 'a', 'an', 'is', 'am', 'are', 'was', 'were', 'can', 'my', 'your', 'his', 'her', 'its', 'our', 'their', 'to', 'in', 'on', 'at', 'for'];
+    const words = text.toLowerCase().split(' ');
+
+    // Find first meaningful word (not in skip list)
+    const meaningfulWord = words.find(word => !skipWords.includes(word.trim()));
+    return meaningfulWord || words[0] || 'nature';
+  };
+
+  // Simple content pools (no punctuation for easier practice)
+  const contentPools = {
+    letters: ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'],
+    words: ['cat', 'dog', 'sun', 'moon', 'star', 'tree', 'fish', 'bird', 'car', 'book', 'ball', 'cake', 'apple', 'house', 'flower'],
+    sentences: [
+      'the cat is sleeping',
+      'I love my dog',
+      'the sun is bright',
+      'birds fly in the sky',
+      'I can type well',
+      'reading is fun',
+    ],
+    stories: [
+      'the dragon likes to play',
+      'a knight rides a horse',
+      'the kitten plays with yarn',
+      'the unicorn has a rainbow mane',
+    ],
+  };
+
+  // Get content for current mode and index
+  const getContentForMode = (learningMode: LearningMode, index: number): LearningContent => {
+    const items = contentPools[learningMode];
+    const item = items[index % items.length];
+
+    return {
+      mode: learningMode,
+      currentItem: item,
+      description: learningMode === 'letters' ? `Type the letter ${item}` : `Type: ${item}`,
+      difficulty: { letters: 1, words: 2, sentences: 3, stories: 4 }[learningMode],
     };
-    return content[learningMode];
+  };
+
+  // Fetch image for current content
+  const fetchImage = async (searchTerm: string) => {
+    setLoadingImage(true);
+    try {
+      const images = await unsplashService.searchImages({
+        query: searchTerm,
+        count: 1,
+        orientation: 'landscape',
+        contentFilter: 'high',
+      });
+
+      if (images && images.length > 0) {
+        setImageUrl(images[0].url);
+      } else {
+        setImageUrl(null);
+      }
+    } catch (error) {
+      console.error('Failed to fetch image:', error);
+      setImageUrl(null);
+    } finally {
+      setLoadingImage(false);
+    }
   };
 
   useEffect(() => {
-    setCurrentContent(getContentForMode(mode));
-  }, [mode]);
+    const content = getContentForMode(mode, taskIndex);
+    setCurrentContent(content);
+
+    // Fetch image for words, sentences, and stories (not letters)
+    if (mode !== 'letters') {
+      // Extract meaningful subject from content for image search
+      const searchTerm = extractMeaningfulWord(content.currentItem);
+      fetchImage(searchTerm);
+    } else {
+      setImageUrl(null); // No images for letter mode
+    }
+  }, [mode, taskIndex]);
 
   useEffect(() => {
     if (level) {
       setMode(level as LearningMode);
+      setTaskIndex(0); // Reset to first task when changing modes
     }
   }, [level]);
+
+  const loadNextTask = () => {
+    setTaskIndex((prev) => prev + 1);
+    setCurrentInput('');
+    setIsCorrect(null);
+  };
+
+  // Helper function to normalize text (case-insensitive, ignore punctuation)
+  const normalizeText = (text: string): string => {
+    return text.toLowerCase().replace(/[.,!?;:'"]/g, '').trim();
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setCurrentInput(value);
 
-    // Check if input matches target
-    if (value === currentContent.currentItem) {
+    // Normalize both input and target for comparison
+    const normalizedInput = normalizeText(value);
+    const normalizedTarget = normalizeText(currentContent.currentItem);
+
+    // Check if input matches target (case-insensitive, no punctuation)
+    if (normalizedInput === normalizedTarget) {
       setIsCorrect(true);
       setScore((prev) => prev + 10);
       setStreak((prev) => prev + 1);
 
+      // Reward pet with XP
+      if (addXP) {
+        addXP(10); // Give 10 XP for each completed task
+      }
+
       // Move to next after a delay
       setTimeout(() => {
-        setCurrentInput('');
-        setIsCorrect(null);
-        // In real implementation, fetch next content
+        loadNextTask();
       }, 1500);
-    } else if (currentContent.currentItem.startsWith(value)) {
-      // Partially correct
+    } else if (normalizedTarget.startsWith(normalizedInput) && normalizedInput.length > 0) {
+      // Partially correct - typing in progress
       setIsCorrect(null);
-    } else {
+    } else if (normalizedInput.length > 0) {
       // Incorrect
       setIsCorrect(false);
       setStreak(0);
@@ -139,6 +226,17 @@ const LearningScreen: React.FC = () => {
 
   return (
     <div className="learning-screen min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 p-6">
+      {/* Pet Companion Display */}
+      {pet && (
+        <motion.div
+          className="fixed top-4 right-4 z-50"
+          animate={{ y: [0, -10, 0] }}
+          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+        >
+          <PetDisplay pet={pet} />
+        </motion.div>
+      )}
+
       {/* Header */}
       <div className="max-w-4xl mx-auto mb-8">
         <button
@@ -185,16 +283,41 @@ const LearningScreen: React.FC = () => {
           {/* Visual Prompt Area */}
           <div className="visual-prompt-area mb-8">
             <motion.div
+              key={taskIndex}
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              className="flex justify-center items-center h-64 bg-gradient-to-br from-purple-100 to-pink-100 rounded-xl"
+              className="relative h-80 bg-gradient-to-br from-purple-100 to-pink-100 rounded-xl overflow-hidden"
             >
-              <div className="text-center">
-                <div className="text-8xl mb-4">
-                  {mode === 'letters' ? '🎯' : mode === 'words' ? '🐱' : mode === 'sentences' ? '🏠' : '🏰'}
+              {imageUrl && mode !== 'letters' ? (
+                <>
+                  <img
+                    src={imageUrl}
+                    alt={currentContent.currentItem}
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4">
+                    <p className="text-2xl text-white font-bold text-center">
+                      {currentContent.description}
+                    </p>
+                  </div>
+                </>
+              ) : (
+                <div className="flex justify-center items-center h-full">
+                  {loadingImage ? (
+                    <div className="text-center">
+                      <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-purple-600 mx-auto mb-4"></div>
+                      <p className="text-xl text-gray-600">Loading image...</p>
+                    </div>
+                  ) : (
+                    <div className="text-center">
+                      <div className="text-9xl mb-4">
+                        {currentContent.currentItem.toUpperCase()}
+                      </div>
+                      <p className="text-2xl text-gray-700">{currentContent.description}</p>
+                    </div>
+                  )}
                 </div>
-                <p className="text-2xl text-gray-700">{currentContent.description}</p>
-              </div>
+              )}
             </motion.div>
           </div>
 
@@ -210,6 +333,17 @@ const LearningScreen: React.FC = () => {
                 {currentContent.currentItem}
               </motion.div>
             </div>
+            {/* Read Aloud Button */}
+            {ttsEnabled && (
+              <div className="mt-4 text-center">
+                <button
+                  onClick={() => speak(currentContent.currentItem)}
+                  className="px-6 py-3 bg-blue-500 text-white rounded-full font-bold hover:bg-blue-600 transition-colors shadow-lg flex items-center gap-2 mx-auto"
+                >
+                  🔊 Read Aloud
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Typing Input */}
@@ -228,7 +362,34 @@ const LearningScreen: React.FC = () => {
                   : 'border-purple-300 focus:border-purple-500'
               } focus:outline-none`}
             />
+            <div className="mt-3 text-center">
+              <button
+                onClick={() => setShowKeyboard(!showKeyboard)}
+                className="text-sm text-purple-600 hover:text-purple-700 underline"
+              >
+                {showKeyboard ? '🔼 Hide Keyboard' : '⌨️ Show Keyboard'}
+              </button>
+            </div>
           </div>
+
+          {/* Virtual Keyboard */}
+          {showKeyboard && (
+            <div className="mb-6">
+              <VirtualKeyboard
+                layout="qwerty"
+                onKeyPress={(key) => {
+                  if (key === 'Backspace') {
+                    handleInputChange({ target: { value: currentInput.slice(0, -1) } } as any);
+                  } else if (key === ' ') {
+                    handleInputChange({ target: { value: currentInput + ' ' } } as any);
+                  } else if (key.length === 1) {
+                    handleInputChange({ target: { value: currentInput + key.toLowerCase() } } as any);
+                  }
+                }}
+                size={settings.fontSize === 'large' ? 'large' : 'medium'}
+              />
+            </div>
+          )}
 
           {/* Feedback */}
           <div className="feedback-area h-20 flex items-center justify-center">

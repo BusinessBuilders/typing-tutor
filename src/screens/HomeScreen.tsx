@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import { usePetStore, useCreatePet } from '../store/usePetStore';
+import { PetDisplay } from '../components/PetSystem';
 
 /**
  * HomeScreen Component - Step 93
@@ -35,6 +37,15 @@ const encouragementMessages = [
 ];
 
 const quickStartOptions = [
+  {
+    id: 'lessons',
+    title: 'AI Lessons',
+    icon: '✨',
+    description: 'Learn with AI-powered lessons',
+    difficulty: 'All Levels',
+    color: 'from-yellow-400 to-orange-500',
+    route: '/lessons',
+  },
   {
     id: 'letters',
     title: 'Letter Practice',
@@ -81,6 +92,21 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
   const navigate = useNavigate();
   const [currentMessage, setCurrentMessage] = useState(0);
   const [showContent, setShowContent] = useState(!showWelcomeAnimation);
+  const { pet } = usePetStore();
+  const createPet = useCreatePet();
+  const [showPetCreate, setShowPetCreate] = useState(false);
+
+  // Create default pet if none exists
+  useEffect(() => {
+    if (!pet && !showPetCreate) {
+      setShowPetCreate(true);
+      // Auto-create a default pet for demo
+      setTimeout(() => {
+        createPet('cat', petName || 'Buddy', 'from-orange-400 to-orange-600');
+        setShowPetCreate(false);
+      }, 100);
+    }
+  }, [pet, petName, createPet, showPetCreate]);
 
   // Rotate encouragement messages
   useEffect(() => {
@@ -104,6 +130,17 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
 
   return (
     <div className="home-screen min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 p-6">
+      {/* Pet Companion Display */}
+      {pet && (
+        <motion.div
+          className="fixed top-4 right-4 z-50"
+          animate={{ y: [0, -10, 0] }}
+          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+        >
+          <PetDisplay pet={pet} />
+        </motion.div>
+      )}
+
       {/* Hero Section */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
