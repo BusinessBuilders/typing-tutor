@@ -77,10 +77,10 @@ const AiLessonScreen: React.FC = () => {
     const initializeLesson = async () => {
       setLoading(true);
 
-      // Find the template
-      const template = LESSON_TEMPLATES.find(t => t.type === templateType);
+      // Find the template by title (not type, since multiple templates share the same type)
+      const template = LESSON_TEMPLATES.find(t => t.title === lessonTitle);
       if (!template) {
-        console.error('Template not found:', templateType);
+        console.error('Template not found:', lessonTitle);
         navigate('/lessons');
         return;
       }
@@ -114,10 +114,10 @@ const AiLessonScreen: React.FC = () => {
       }
     };
 
-    if (templateType) {
+    if (lessonTitle) {
       initializeLesson();
     }
-  }, [templateType]);
+  }, [lessonTitle]);
 
   // Load next session
   const loadNextSession = async () => {
