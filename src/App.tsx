@@ -7,6 +7,7 @@ import { useEffect } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { useUserStore } from './store/useUserStore';
 import { useSettingsStore } from './store/useSettingsStore';
+import { MusicPlayer } from './components/BackgroundMusic';
 
 function App() {
   const { currentUser } = useUserStore();
@@ -52,6 +53,13 @@ function App() {
           AI-Powered Autism Typing Tutor - Building confidence, one keystroke at a time ❤️
         </p>
       </footer>
+
+      {/* Background Music Player - Fixed bottom right */}
+      {settings.musicEnabled && (
+        <div className="fixed bottom-6 right-6 z-40">
+          <MusicPlayer />
+        </div>
+      )}
     </div>
   );
 }

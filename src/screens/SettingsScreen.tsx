@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import { useSettingsStore } from '../store/useSettingsStore';
 
 /**
  * SettingsScreen Component - Step 96
@@ -80,17 +81,23 @@ const defaultSettings: SettingsConfig = {
 
 const SettingsScreen: React.FC = () => {
   const navigate = useNavigate();
+  const { settings: globalSettings, updateSettings } = useSettingsStore();
   const [settings, setSettings] = useState<SettingsConfig>(defaultSettings);
   const [activeSection, setActiveSection] = useState<string>('visual');
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
 
   const updateSetting = useCallback((key: keyof SettingsConfig, value: any) => {
     setSettings((prev) => ({ ...prev, [key]: value }));
-  }, []);
+
+    // Also update global store for music toggle
+    if (key === 'backgroundMusicEnabled') {
+      updateSettings({ musicEnabled: value });
+    }
+  }, [updateSettings]);
 
   const handleSave = useCallback(() => {
     setSaveStatus('saving');
-    // Simulate saving to localStorage
+    // Save to localStorage
     setTimeout(() => {
       localStorage.setItem('typing-tutor-settings', JSON.stringify(settings));
       setSaveStatus('saved');
@@ -101,8 +108,9 @@ const SettingsScreen: React.FC = () => {
   const handleReset = useCallback(() => {
     if (window.confirm('Reset all settings to defaults? This cannot be undone.')) {
       setSettings(defaultSettings);
+      updateSettings({ musicEnabled: false });
     }
-  }, []);
+  }, [updateSettings]);
 
   const sections = [
     { id: 'visual', label: 'Visual & Display', icon: '🎨' },

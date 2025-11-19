@@ -8,6 +8,9 @@ import { speak, initializeTTS, isSupported as isTTSSupported } from '../services
 import VirtualKeyboard from '../components/VirtualKeyboard';
 import { useSettingsStore } from '../store/useSettingsStore';
 import { TherapeuticContentGenerator } from '../services/ai/TherapeuticContentGenerator';
+import { useBadgeSystem } from '../components/BadgeSystem';
+import { AchievementUnlock, ConfettiExplosion, StarBurst } from '../components/Celebrations';
+import { useSuccessSounds } from '../components/SuccessSounds';
 
 /**
  * LearningScreen Component - Step 95
@@ -60,6 +63,14 @@ const LearningScreen: React.FC = () => {
   const [ttsEnabled] = useState(isTTSSupported());
   const [contentGenerator] = useState(() => new TherapeuticContentGenerator());
   const [isLoadingContent, setIsLoadingContent] = useState(false);
+
+  // Badge and celebration systems
+  const { unlockBadge, recentlyUnlocked } = useBadgeSystem();
+  const { playSuccessSequence } = useSuccessSounds();
+  const [showBadgeUnlock, setShowBadgeUnlock] = useState(false);
+  const [unlockedBadge, setUnlockedBadge] = useState<any>(null);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [showStarBurst, setShowStarBurst] = useState(false);
 
   // Initialize TTS on mount
   useEffect(() => {
@@ -187,6 +198,69 @@ const LearningScreen: React.FC = () => {
     return text.toLowerCase().replace(/[.,!?;:'"]/g, '').trim();
   };
 
+  // Check and unlock achievements
+  const checkAchievements = () => {
+    // First Word Badge
+    if (score === 10 && mode === 'words') {
+      const badge = unlockBadge('first_word');
+      if (badge) {
+        setUnlockedBadge(badge);
+        setShowBadgeUnlock(true);
+        setShowConfetti(true);
+        setTimeout(() => setShowConfetti(false), 3000);
+      }
+    }
+
+    // Combo King - 50 streak
+    if (streak === 50) {
+      const badge = unlockBadge('combo_king');
+      if (badge) {
+        setUnlockedBadge(badge);
+        setShowBadgeUnlock(true);
+        setShowConfetti(true);
+        setTimeout(() => setShowConfetti(false), 3000);
+      }
+    }
+
+    // Week Warrior - 7 streak (treating as 7 in a row for now)
+    if (streak === 7) {
+      const badge = unlockBadge('week_streak');
+      if (badge) {
+        setUnlockedBadge(badge);
+        setShowBadgeUnlock(true);
+        setShowStarBurst(true);
+        setTimeout(() => setShowStarBurst(false), 2000);
+      }
+    }
+
+    // Rising Star - level 10 (when score reaches 100)
+    if (score === 100) {
+      const badge = unlockBadge('level_10');
+      if (badge) {
+        setUnlockedBadge(badge);
+        setShowBadgeUnlock(true);
+        setShowConfetti(true);
+        setTimeout(() => setShowConfetti(false), 3000);
+      }
+    }
+
+    // Early Bird / Night Owl - time-based
+    const hour = new Date().getHours();
+    if (hour < 8 && score === 10) {
+      const badge = unlockBadge('early_bird');
+      if (badge) {
+        setUnlockedBadge(badge);
+        setShowBadgeUnlock(true);
+      }
+    } else if (hour >= 22 && score === 10) {
+      const badge = unlockBadge('night_owl');
+      if (badge) {
+        setUnlockedBadge(badge);
+        setShowBadgeUnlock(true);
+      }
+    }
+  };
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setCurrentInput(value);
@@ -201,10 +275,25 @@ const LearningScreen: React.FC = () => {
       setScore((prev) => prev + 10);
       setStreak((prev) => prev + 1);
 
+      // Play success sound based on mode
+      const soundType = mode === 'letters' ? 'wordComplete' :
+                       mode === 'words' ? 'wordComplete' :
+                       mode === 'sentences' ? 'sentenceComplete' : 'levelComplete';
+      playSuccessSequence(soundType);
+
+      // Show star burst celebration
+      setShowStarBurst(true);
+      setTimeout(() => setShowStarBurst(false), 1500);
+
       // Reward pet with XP
       if (addXP) {
         addXP(10); // Give 10 XP for each completed task
       }
+
+      // Check for achievements
+      setTimeout(() => {
+        checkAchievements();
+      }, 100);
 
       // Move to next after a delay
       setTimeout(() => {
@@ -481,6 +570,23 @@ const LearningScreen: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Celebrations and Badge Unlocks */}
+      <ConfettiExplosion show={showConfetti} />
+      <StarBurst show={showStarBurst} />
+
+      {unlockedBadge && (
+        <AchievementUnlock
+          show={showBadgeUnlock}
+          title={unlockedBadge.name}
+          description={unlockedBadge.description}
+          icon={unlockedBadge.icon}
+          onClose={() => {
+            setShowBadgeUnlock(false);
+            setUnlockedBadge(null);
+          }}
+        />
+      )}
     </div>
   );
 };
