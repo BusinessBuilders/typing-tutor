@@ -13,6 +13,7 @@ import ParentDashboard from './screens/ParentDashboard';
 import CVCPracticeScreen from './screens/CVCPracticeScreen';
 import CompoundWordsScreen from './screens/CompoundWordsScreen';
 import SkillProgressScreen from './screens/SkillProgressScreen';
+import PrivacyPolicyScreen from './screens/PrivacyPolicyScreen';
 
 // Router configuration
 export const router = createBrowserRouter([
@@ -67,6 +68,10 @@ export const router = createBrowserRouter([
       {
         path: 'skill-progress',
         element: <SkillProgressScreen />,
+      },
+      {
+        path: 'privacy-policy',
+        element: <PrivacyPolicyScreen />,
       },
     ],
   },
