@@ -71,7 +71,7 @@ const LearningScreen: React.FC = () => {
   const [levelSystem] = useState(() => new LevelSystem());
   const [currentLevel, setCurrentLevel] = useState(() => levelSystem.getCurrentLevel());
   const [sessionStartTime] = useState(Date.now());
-  const [wordsTypedInSession, setWordsTypedInSession] = useState(0);
+  const [wordsTypedInSession, setWordsTypedInSession] = useState(0); // eslint-disable-line @typescript-eslint/no-unused-vars
   const [showLevelUp, setShowLevelUp] = useState(false);
   const [levelUpMessage, setLevelUpMessage] = useState('');
 

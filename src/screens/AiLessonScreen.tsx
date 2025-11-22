@@ -208,9 +208,10 @@ const AiLessonScreen: React.FC = () => {
         .join('. ');
 
       // Automatically speak the full story
-      speak(fullStory, () => {
+      speak(fullStory);
+      setTimeout(() => {
         setIsReadingStory(false);
-      });
+      }, 3000);
     }
   }, [isComplete, lessonPlan, ttsEnabled]);
 

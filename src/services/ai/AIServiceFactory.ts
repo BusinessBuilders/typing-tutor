@@ -9,6 +9,9 @@ import OpenAIService from './OpenAIService';
 import ClaudeService from './ClaudeService';
 import { getApiKey, hasApiKey } from '../../utils/env';
 
+// Re-export for convenience
+export type { AIProviderType };
+
 /**
  * AI Service Factory Class
  * Implements singleton pattern for provider instances

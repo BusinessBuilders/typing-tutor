@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Autism Typing Tutor</string>
+    <string name="title_activity_main">Autism Typing Tutor</string>
+    <string name="package_name">com.typingtutor.autism</string>
+    <string name="custom_url_scheme">com.typingtutor.autism</string>
+</resources>
