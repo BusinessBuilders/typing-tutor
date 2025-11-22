@@ -12,6 +12,7 @@ import ProgressScreen from './screens/ProgressScreen';
 import ParentDashboard from './screens/ParentDashboard';
 import CVCPracticeScreen from './screens/CVCPracticeScreen';
 import CompoundWordsScreen from './screens/CompoundWordsScreen';
+import SkillProgressScreen from './screens/SkillProgressScreen';
 
 // Router configuration
 export const router = createBrowserRouter([
@@ -62,6 +63,10 @@ export const router = createBrowserRouter([
       {
         path: 'compound-words',
         element: <CompoundWordsScreen />,
+      },
+      {
+        path: 'skill-progress',
+        element: <SkillProgressScreen />,
       },
     ],
   },

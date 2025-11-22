@@ -50,5 +50,12 @@ export default defineConfig({
   server: {
     port: 3000,
     strictPort: false,
+    host: true, // Allow external access
+    allowedHosts: [
+      'localhost',
+      '.ngrok-free.app',
+      '.ngrok.io',
+      'hip-piglet-forcibly.ngrok-free.app',
+    ],
   },
 })

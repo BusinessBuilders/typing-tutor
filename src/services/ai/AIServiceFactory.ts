@@ -75,12 +75,16 @@ export class AIServiceFactory {
    * Initialize provider with API key from environment
    */
   static initializeFromEnv(provider: AIProviderType): IAIProvider | null {
+    console.log('🔑 Loading API key for provider:', provider);
     const apiKey = getApiKey(provider);
 
     if (!apiKey) {
-      console.warn(`No API key found for provider: ${provider}`);
+      console.error(`❌ No API key found for provider: ${provider}`);
+      console.log('💡 Make sure your .env file has VITE_OPENAI_API_KEY set');
       return null;
     }
+
+    console.log('✅ API key found, length:', apiKey.length);
 
     const config: AIConfig = {
       provider,

@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { LESSON_TEMPLATES, LessonTemplate } from '../services/ai/LessonPlanService';
+import { LESSON_TEMPLATES, LessonTemplate, LessonPlanService } from '../services/ai/LessonPlanService';
 import { useUserStore } from '../store/useUserStore';
 
 /**
@@ -11,9 +11,36 @@ import { useUserStore } from '../store/useUserStore';
 const LessonSelectionScreen: React.FC = () => {
   const navigate = useNavigate();
   const { currentUser } = useUserStore();
+  const [isGenerating, setIsGenerating] = useState(false);
+
   const handleSelectLesson = (template: LessonTemplate) => {
     // Navigate to AI lesson screen
     navigate(`/ai-lesson?template=${template.type}&title=${encodeURIComponent(template.title)}`);
+  };
+
+  const handleGenerateCustomLesson = async () => {
+    setIsGenerating(true);
+    try {
+      const lessonService = new LessonPlanService('openai');
+      await lessonService.initialize();
+
+      // Have AI suggest a custom lesson topic
+      const customTemplate: LessonTemplate = {
+        type: 'custom',
+        title: 'AI-Generated Custom Lesson',
+        description: 'Personalized lesson created just for you based on your learning progress',
+        icon: '🤖',
+        suggestedSessions: 5,
+        ageRange: [currentUser?.age || 8, (currentUser?.age || 8) + 2],
+      };
+
+      handleSelectLesson(customTemplate);
+    } catch (error) {
+      console.error('Failed to generate custom lesson:', error);
+      alert('Could not generate custom lesson. Please try again.');
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   const isAgeAppropriate = (template: LessonTemplate): boolean => {
@@ -57,6 +84,46 @@ const LessonSelectionScreen: React.FC = () => {
             </p>
           </motion.div>
         </div>
+
+        {/* AI Custom Lesson Generator */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="mb-8"
+        >
+          <div className="bg-gradient-to-r from-purple-500 via-pink-500 to-orange-500 p-1 rounded-2xl">
+            <div className="bg-white rounded-2xl p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="text-6xl">🤖✨</div>
+                  <div>
+                    <h3 className="text-2xl font-bold text-gray-800 mb-1">
+                      AI Custom Lesson Generator
+                    </h3>
+                    <p className="text-gray-600">
+                      Let AI analyze your progress and create a perfect lesson just for you!
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={handleGenerateCustomLesson}
+                  disabled={isGenerating}
+                  className="px-8 py-4 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 disabled:from-gray-400 disabled:to-gray-500 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all disabled:cursor-not-allowed"
+                >
+                  {isGenerating ? (
+                    <span className="flex items-center gap-2">
+                      <span className="animate-spin">⏳</span>
+                      Generating...
+                    </span>
+                  ) : (
+                    'Generate Custom Lesson'
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </motion.div>
 
         {/* Lesson Templates Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

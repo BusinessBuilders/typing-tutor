@@ -30,7 +30,7 @@ export interface LessonPlan {
 }
 
 export interface LessonTemplate {
-  type: 'story' | 'education' | 'creative' | 'adventure';
+  type: 'story' | 'education' | 'creative' | 'adventure' | 'custom';
   title: string;
   description: string;
   icon: string;
@@ -116,14 +116,17 @@ export class LessonPlanService {
    */
   async initialize(): Promise<boolean> {
     try {
+      console.log('🔧 Initializing LessonPlanService with provider:', this.aiProvider);
       const provider = AIServiceFactory.initializeFromEnv(this.aiProvider);
       if (provider) {
         this.initialized = true;
+        console.log('✅ LessonPlanService initialized successfully');
         return true;
       }
+      console.warn('❌ Failed to initialize AI provider - no API key found');
       return false;
     } catch (error) {
-      console.error('Failed to initialize LessonPlanService:', error);
+      console.error('❌ Failed to initialize LessonPlanService:', error);
       return false;
     }
   }
@@ -142,28 +145,95 @@ export class LessonPlanService {
 
     const aiService = AIServiceFactory.getProvider(this.aiProvider);
 
+    // For custom lessons, have AI suggest the topic first
+    let finalTemplate = template;
+    if (template.type === 'custom') {
+      console.log('🤖 AI generating custom lesson topic...');
+      try {
+        const topicPrompt = this.buildCustomTopicPrompt(childAge, interests);
+        const topicResponse = await aiService.generateSentence({
+          type: 'sentence-generation',
+          level: 'sentences',
+          topic: 'custom lesson topic',
+          context: topicPrompt,
+          userAge: childAge,
+        });
+
+        // Extract topic from AI response
+        const customTopic = topicResponse.content.trim().split('\n')[0];
+        console.log('✅ AI suggested topic:', customTopic);
+
+        finalTemplate = {
+          ...template,
+          title: customTopic,
+          description: `Personalized lesson about ${customTopic}`,
+        };
+      } catch (error) {
+        console.error('Failed to generate custom topic:', error);
+        finalTemplate = {
+          ...template,
+          title: 'Learn Something New',
+          description: 'A fun educational lesson',
+        };
+      }
+    }
+
     // Build prompt for AI to create structured lesson plan
-    const prompt = this.buildLessonPlanPrompt(template, childAge, interests);
+    const prompt = this.buildLessonPlanPrompt(finalTemplate, childAge, interests);
 
     try {
       // Use generateScene for creating lesson plans
       const response = await aiService.generateScene({
         type: 'scene-generation',
         level: 'sentences',
-        topic: template.title,
+        topic: finalTemplate.title,
         context: prompt,
         userAge: childAge,
       });
 
       // Parse AI response into lesson plan structure
-      const lessonPlan = this.parseLessonPlanResponse(response.content, template, childAge, interests);
+      const lessonPlan = this.parseLessonPlanResponse(response.content, finalTemplate, childAge, interests);
 
       return lessonPlan;
     } catch (error) {
       console.error('Failed to generate lesson plan:', error);
       // Return fallback lesson plan
-      return this.createFallbackLessonPlan(template, childAge);
+      return this.createFallbackLessonPlan(finalTemplate, childAge);
     }
+  }
+
+  /**
+   * Build prompt for AI to suggest a custom lesson topic
+   */
+  private buildCustomTopicPrompt(childAge: number, interests?: string[]): string {
+    const interestsText = interests && interests.length > 0
+      ? `The child is interested in: ${interests.join(', ')}`
+      : '';
+
+    return `You are an expert education specialist creating a custom typing lesson for a ${childAge}-year-old child with autism.
+
+YOUR TASK: Suggest ONE educational topic that would be perfect for this child to learn while practicing typing.
+
+GUIDELINES:
+✅ Choose something age-appropriate and engaging
+✅ Make it educational and meaningful
+✅ Consider autism-friendly topics (concrete, predictable, interesting)
+✅ Pick something that can be taught in 4-5 short sessions
+${interestsText ? `✅ Consider the child's interests: ${interestsText}` : ''}
+
+TOPIC EXAMPLES FOR INSPIRATION:
+- "How Plants Grow" (science)
+- "Friendly Dinosaurs" (prehistoric life)
+- "Making Art" (creativity)
+- "The Weather" (nature)
+- "Helpful Robots" (technology)
+- "Ocean Friends" (marine life)
+- "How Bridges Work" (engineering)
+- "Cooking Simple Snacks" (life skills)
+
+FORMAT: Respond with ONLY the topic title (2-5 words), nothing else.
+
+Your suggestion:`;
   }
 
   /**
@@ -236,6 +306,7 @@ Write ONLY the ${sessionNumber > 1 ? 'new' : ''} sentences. One per line. Nothin
 `;
 
     try {
+      console.log('🤖 Calling AI to generate lesson session', sessionNumber, 'for:', lessonPlan.title);
       const response = await aiService.generateSentence({
         type: 'sentence-generation',
         level: 'sentences',
@@ -244,8 +315,12 @@ Write ONLY the ${sessionNumber > 1 ? 'new' : ''} sentences. One per line. Nothin
         userAge: lessonPlan.childAge,
       });
 
+      console.log('📝 AI Lesson Response received:', response.content.substring(0, 100) + '...');
+
       const content = response.content.trim();
       const sentences = content.split('\n').filter((s: string) => s.trim().length > 0);
+
+      console.log('✅ Generated lesson session with', sentences.length, 'sentences');
 
       return {
         sessionNumber,
@@ -255,7 +330,8 @@ Write ONLY the ${sessionNumber > 1 ? 'new' : ''} sentences. One per line. Nothin
         estimatedMinutes: Math.ceil(content.length / 50), // Rough estimate
       };
     } catch (error) {
-      console.error('Failed to generate session:', error);
+      console.error('❌ Failed to generate lesson session:', error);
+      console.log('⚠️ Falling back to hardcoded lesson content');
       return this.createFallbackSession(sessionNumber, lessonPlan);
     }
   }

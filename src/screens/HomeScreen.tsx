@@ -250,7 +250,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 1.4 }}
-            className="main-navigation grid grid-cols-1 md:grid-cols-3 gap-6 mb-12"
+            className="main-navigation grid grid-cols-1 md:grid-cols-4 gap-6 mb-12"
           >
             <motion.button
               whileHover={{ scale: 1.03 }}
@@ -263,6 +263,19 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
                 My Progress
               </h3>
               <p className="text-gray-600">See how much you've improved!</p>
+            </motion.button>
+
+            <motion.button
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => navigate('/skill-progress')}
+              className="nav-card p-8 bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl shadow-md hover:shadow-xl transition-all text-center border-4 border-yellow-400"
+            >
+              <div className="text-5xl mb-4">🤖</div>
+              <h3 className="text-2xl font-bold text-white mb-2">
+                AI Skills & Levels
+              </h3>
+              <p className="text-white/90 font-medium">Track your learning journey!</p>
             </motion.button>
 
             <motion.button

@@ -27,7 +27,8 @@ export class OpenAIService implements IAIProvider {
   private baseURL: string = 'https://api.openai.com/v1';
 
   constructor() {
-    this.model = 'gpt-3.5-turbo';
+    this.model = 'gpt-4o-mini';
+    this.maxTokens = 2000; // Increase for batch generation
   }
 
   initialize(config: AIConfig): void {
@@ -145,27 +146,35 @@ export class OpenAIService implements IAIProvider {
   }
 
   async generateSentence(request: ContentGenerationRequest): Promise<ContentGenerationResponse> {
-    const systemPrompt = `You are a helpful assistant for a typing tutor designed for children with autism. Generate simple, clear sentences for typing practice. Use autism-friendly language: direct, literal, and predictable.`;
+    const systemPrompt = `You are a helpful assistant for a typing tutor designed for children with autism. Generate simple, clear sentences for typing practice. Use autism-friendly language: direct, literal, and predictable. FOLLOW ALL INSTRUCTIONS EXACTLY.`;
 
     const difficulty = request.difficulty || 'easy';
-    const difficultyMap = {
-      easy: 'short (4-6 words), simple structure',
-      medium: 'medium (6-10 words), with one conjunction or descriptor',
-      hard: 'longer (10-15 words), with multiple clauses but still clear',
-    };
 
-    let prompt = `Generate a ${difficultyMap[difficulty]} sentence for a ${request.userAge || 8}-year-old autistic child to practice typing.`;
+    // If a custom context is provided, use it directly
+    let prompt: string;
+    if (request.context) {
+      console.log('📋 Using custom context prompt for batch generation');
+      prompt = request.context;
+    } else {
+      const difficultyMap = {
+        easy: 'short (4-6 words), simple structure',
+        medium: 'medium (6-10 words), with one conjunction or descriptor',
+        hard: 'longer (10-15 words), with multiple clauses but still clear',
+      };
 
-    if (request.topic) {
-      prompt += ` The sentence should be about: ${request.topic}.`;
+      prompt = `Generate a ${difficultyMap[difficulty]} sentence for a ${request.userAge || 8}-year-old autistic child to practice typing.`;
+
+      if (request.topic) {
+        prompt += ` The sentence should be about: ${request.topic}.`;
+      }
+
+      prompt += ` Use clear, literal language. Avoid idioms or figurative speech. Respond with ONLY the sentence, nothing else.`;
     }
-
-    prompt += ` Use clear, literal language. Avoid idioms or figurative speech. Respond with ONLY the sentence, nothing else.`;
 
     const content = await this.makeRequest(prompt, systemPrompt);
     const sentence = content.replace(/['"]/g, '').trim();
 
-    const keywords = await this.extractImageKeywords(sentence);
+    const keywords = request.context ? [] : await this.extractImageKeywords(sentence);
 
     return {
       content: sentence,

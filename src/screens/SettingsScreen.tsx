@@ -112,6 +112,14 @@ const SettingsScreen: React.FC = () => {
     }
   }, [updateSettings]);
 
+  const handleClearAICache = useCallback(() => {
+    if (window.confirm('Clear all AI-generated content cache? This will force fresh content generation.')) {
+      localStorage.removeItem('therapeutic_used_content');
+      localStorage.removeItem('therapeutic_content_cache');
+      alert('AI content cache cleared! New content will be generated on next use.');
+    }
+  }, []);
+
   const sections = [
     { id: 'visual', label: 'Visual & Display', icon: '🎨' },
     { id: 'audio', label: 'Audio & Voice', icon: '🔊' },
@@ -602,19 +610,29 @@ const SettingsScreen: React.FC = () => {
             {activeSection === 'sensory' && renderSensorySettings()}
 
             {/* Action Buttons */}
-            <div className="mt-8 flex gap-4">
+            <div className="mt-8 space-y-4">
+              <div className="flex gap-4">
+                <button
+                  onClick={handleSave}
+                  disabled={saveStatus === 'saving'}
+                  className="flex-1 py-4 bg-purple-500 hover:bg-purple-600 disabled:bg-gray-400 text-white font-bold rounded-xl transition-all shadow-md hover:shadow-lg"
+                >
+                  {saveStatus === 'saving' ? 'Saving...' : saveStatus === 'saved' ? 'Saved! ✓' : 'Save Settings'}
+                </button>
+                <button
+                  onClick={handleReset}
+                  className="px-6 py-4 bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold rounded-xl transition-all"
+                >
+                  Reset to Defaults
+                </button>
+              </div>
+
+              {/* Clear AI Cache Button */}
               <button
-                onClick={handleSave}
-                disabled={saveStatus === 'saving'}
-                className="flex-1 py-4 bg-purple-500 hover:bg-purple-600 disabled:bg-gray-400 text-white font-bold rounded-xl transition-all shadow-md hover:shadow-lg"
+                onClick={handleClearAICache}
+                className="w-full py-4 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-xl transition-all shadow-md hover:shadow-lg"
               >
-                {saveStatus === 'saving' ? 'Saving...' : saveStatus === 'saved' ? 'Saved! ✓' : 'Save Settings'}
-              </button>
-              <button
-                onClick={handleReset}
-                className="px-6 py-4 bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold rounded-xl transition-all"
-              >
-                Reset to Defaults
+                🗑️ Clear AI Content Cache (Fix Repetition)
               </button>
             </div>
           </motion.div>
